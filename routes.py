@@ -75,7 +75,7 @@ def create_app():
             if not all(key in data for key in required_keys):
                 missing_keys = ', '.join(key for key in required_keys if key not in data)
                 raise ValueError(f"Missing required key(s) in JSON data: {missing_keys}")
-
+            
             # Convert data types and validate input
             try:
                 price = float(data['price'])
@@ -86,6 +86,11 @@ def create_app():
 
             if not (1 <= price <= 30):
                 raise ValueError("Price must be between 1 and 30")
+
+            # Check if the record already exists
+            existing_entry = RestaurantPizza.query.filter_by(pizza_id=pizza_id, restaurant_id=restaurant_id).first()
+            if existing_entry:
+                return jsonify({"error": "A restaurant_pizza with the same pizza and restaurant already exists"}), 400
 
             # Check if pizza and restaurant exist
             pizza = Pizza.query.get(pizza_id)
@@ -111,8 +116,6 @@ def create_app():
             return jsonify({"error": "Database integrity error"}), 400
         except Exception as e:
             return jsonify({"error": str(e)}), 500
-
-
 
     return app
 
