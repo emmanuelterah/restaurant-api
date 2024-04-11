@@ -48,6 +48,43 @@ The Pizza Restaurant API is a robust and flexible tool designed to streamline th
 - **Parameters:**
   - `id` (integer)
 
+### GET /pizza 
+
+- **Endpoint:** /pizzas
+- **Method:** GET
+- **Description:** Retrieves a list of all pizzas available in the system.
+- **Sample Request:** GET /pizzas
+- **Sample Response:**
+
+    json
+
+    [
+        {
+            "id": 1,
+            "name": "Margherita",
+            "ingredients": "Tomato sauce, mozzarella cheese, basil"
+        },
+        {
+            "id": 2,
+            "name": "Pepperoni",
+            "ingredients": "Tomato sauce, mozzarella cheese, pepperoni"
+        },
+        {
+            "id": 3,
+            "name": "Vegetarian",
+            "ingredients": "Tomato sauce, mozzarella cheese, bell peppers, onions, olives"
+        }
+    ]
+
+### DELETE /restaurants/<restaurant_id>
+
+- **Method:** DELETE
+- **Description:** Deletes a restaurant with the specified ID from the system.
+- **Sample Request:** DELETE /restaurants/1
+- **Sample Response:** Status Code: 204 No Content
+
+These endpoints allow users to retrieve information about pizzas and delete restaurants from the system.
+
 ### POST /restaurant_pizzas
 
 - **Method:** POST

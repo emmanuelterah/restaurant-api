@@ -1,3 +1,5 @@
+
+
 from flask import Flask, jsonify, request
 from sqlalchemy.exc import IntegrityError
 from models.pizza import Pizza
@@ -60,50 +62,57 @@ def create_app():
     
     @app.route('/restaurant_pizzas', methods=['POST'])
     def create_restaurant_pizza():
-        data = request.json
         try:
-            # Extract data from request
-            price = float(data.get('price'))
-            pizza_id = int(data.get('pizza_id'))
-            restaurant_id = int(data.get('restaurant_id'))
+            # Get JSON data from request body
+            data = request.get_json()
 
-            # Validate input (unchanged)
-            if not (price and 1 <= price <= 30 and pizza_id and restaurant_id):
-                return jsonify({"errors": ["Invalid input data"]}), 400
+            # Check if data is retrieved successfully
+            if not data:
+                raise ValueError("Request body is empty or not in JSON format")
 
-            # Check if pizza and restaurant exist (unchanged)
+            # Ensure all required keys are present in the JSON data
+            required_keys = ['price', 'pizza_id', 'restaurant_id']
+            if not all(key in data for key in required_keys):
+                missing_keys = ', '.join(key for key in required_keys if key not in data)
+                raise ValueError(f"Missing required key(s) in JSON data: {missing_keys}")
+
+            # Convert data types and validate input
+            try:
+                price = float(data['price'])
+                pizza_id = int(data['pizza_id'])
+                restaurant_id = int(data['restaurant_id'])
+            except ValueError:
+                raise ValueError("Invalid data type for price, pizza_id, or restaurant_id")
+
+            if not (1 <= price <= 30):
+                raise ValueError("Price must be between 1 and 30")
+
+            # Check if pizza and restaurant exist
             pizza = Pizza.query.get(pizza_id)
             restaurant = Restaurant.query.get(restaurant_id)
             if not (pizza and restaurant):
-                return jsonify({"errors": ["Pizza or Restaurant not found"]}), 404
+                return jsonify({"error": "Pizza or Restaurant not found"}), 404
 
-                # Ensure valid restaurant_id before creating object (unchanged)
-            if not restaurant_id:
-                return jsonify({"errors": ["Restaurant ID cannot be empty"]}), 400
-
-            # Additional validation for uniqueness (optional)
-            # Check if the combination of pizza_id and restaurant_id already exists
-            existing_pizza_restaurant = RestaurantPizza.query.filter_by(pizza_id=pizza_id, restaurant_id=restaurant_id).first()
-            if existing_pizza_restaurant:
-                return jsonify({"errors": ["This pizza already exists in the restaurant"]}), 400
-
-            # Create restaurant pizza object (unchanged)
+            # Create restaurant pizza object
             restaurant_pizza = RestaurantPizza(price=price, pizza_id=pizza_id, restaurant_id=restaurant_id)
             db.session.add(restaurant_pizza)
             db.session.commit()
 
-            # Return the created pizza details (unchanged)
-            return jsonify({
-                            'id': restaurant_pizza.id,
-                            'price': restaurant_pizza.price,
-                            'pizza_id': restaurant_pizza.pizza_id,
-                            'restaurant_id': restaurant_pizza.restaurant_id
-                        }), 201
-        except ValueError:
-            return jsonify({"errors": ["Invalid price or IDs"]}), 400
+            # Return success message
+            return jsonify({"success": "Restaurant pizza created successfully"}), 201
+        except ValueError as ve:
+            # Provide more specific message for JSON decode error
+            if "Expecting value" in str(ve):
+                return jsonify({"error": "Invalid JSON data format. Please check your request body."}), 400
+            else:
+                return jsonify({"error": str(ve)}), 400
         except IntegrityError:
             db.session.rollback()
-            return jsonify({"errors": ["Database integrity error"]}), 400
+            return jsonify({"error": "Database integrity error"}), 400
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+
 
     return app
 
